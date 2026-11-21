@@ -4,8 +4,8 @@ path=($HOME/.local/bin "${path[@]}")
 export PATH
 
 HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
-HISTSIZE=50000
-SAVEHIST=20000
+HISTSIZE=300000
+SAVEHIST=250000
 setopt INC_APPEND_HISTORY HIST_IGNORE_DUPS HIST_FIND_NO_DUPS
 bindkey -M emacs '^R' history-incremental-search-backward
 bindkey -M viins '^R' history-incremental-search-backward

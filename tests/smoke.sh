@@ -59,7 +59,7 @@ cmp "${backups[0]}" "$scratch/original"
 PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/zsh -ic '
   set -e
   [[ $MAC_UP_TEST == untouched && $path[1] == "$HOME/.local/bin" ]]
-  [[ $HISTFILE == "$HOME/.zsh_history" && $SAVEHIST == 20000 ]]
+  [[ $HISTFILE == "$HOME/.zsh_history" && $HISTSIZE == 300000 && $SAVEHIST == 250000 ]]
   for map in emacs viins; do
     [[ $(bindkey -M "$map" "^R") == *" history-incremental-search-backward" ]]
   done
