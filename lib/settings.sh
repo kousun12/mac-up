@@ -116,3 +116,27 @@ configure_rectangle() {
   fi
   apply_rectangle_shortcuts com.knollsoft.Rectangle
 }
+
+configure_always_on() {
+  local capabilities
+  local -a settings=(sleep 0)
+  if capabilities=$(/usr/bin/pmset -g cap) &&
+     printf '%s\n' "$capabilities" | grep -Eq '^[[:space:]]*autorestart[[:space:]]*$'; then
+    settings+=(autorestart 1)
+  fi
+  printf 'Applying always-on settings for AC power (display sleep is unchanged).\n'
+  if ! /usr/bin/sudo /usr/bin/pmset -c "${settings[@]}"; then
+    warn 'Could not apply always-on power settings.'
+    return 1
+  fi
+}
+
+always_on_sharing_instructions() {
+  printf '\n%s\n' 'Finish remote access on this Mac in System Settings > General > Sharing:' \
+    '  Turn on Remote Login and Screen Sharing. For each, choose “Only these users” and add your Mac account.' \
+    '  Leave full disk access for remote users and the separate VNC password option off unless needed.' \
+    '  Screen Sharing and Remote Management cannot both be on; leave managed Macs to their administrator.' \
+    '  Connect over Tailscale using the Mac’s MagicDNS name or Tailscale IP.' \
+    '  For example: ssh youruser@office-mac or, from a Mac, open vnc://office-mac.' \
+    '  Keep the Tailscale user session signed in; test both connections before leaving the Mac unattended.'
+}

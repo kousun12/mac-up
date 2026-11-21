@@ -198,8 +198,35 @@ install_app() (
   fi
 )
 
+install_tailscale() {
+  local version=1.104.7 sha256=0ecab60e098d31f9cbd334867474293dc08978154665da75c3f3fe1f8215d6e7
+  local pkg=$WORK/Tailscale.pkg signature
+  if [[ -f /Applications/Tailscale.app/Contents/Info.plist ||
+        -f $HOME/Applications/Tailscale.app/Contents/Info.plist ]]; then
+    printf 'Keeping existing Tailscale.app\n'
+    return
+  fi
+  if [[ -e /Applications/Tailscale.app || -L /Applications/Tailscale.app ]]; then
+    warn 'Refusing to overwrite /Applications/Tailscale.app'
+    return 1
+  fi
+  printf 'Installing Tailscale\n'
+  download "https://pkgs.tailscale.com/stable/Tailscale-$version-macos.pkg" "$pkg" || return 1
+  if ! printf '%s  %s\n' "$sha256" "$pkg" | /usr/bin/shasum -a 256 -c --status; then
+    warn 'Checksum verification failed for the Tailscale installer'
+    return 1
+  fi
+  if ! signature=$(LC_ALL=C /usr/sbin/pkgutil --check-signature "$pkg") ||
+     [[ $signature != *'1. Developer ID Installer: Tailscale Inc. (W5364U7YZB)'* ]]; then
+    warn 'Could not verify the Tailscale installer signature'
+    return 1
+  fi
+  /usr/bin/sudo /usr/sbin/installer -pkg "$pkg" -target /
+}
+
 install_apps() {
   install_app Ghostty.app https://release.files.ghostty.org/1.4.0/Ghostty.dmg com.mitchellh.ghostty 24VZTF6M5V 13
   install_app Rectangle.app https://download.rectangleapp.com/Rectangle2.0.5.dmg com.knollsoft.Rectangle XSYZ3E4B7D 14
   install_app 'Google Chrome.app' https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg com.google.Chrome EQHXZ8M8AV 13
+  install_tailscale
 }

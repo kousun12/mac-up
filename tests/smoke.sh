@@ -20,7 +20,12 @@ mkdir -p "$HOME"
 [[ -z $(/bin/ls -A "$HOME") ]]
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
 [[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq, fzf, gh'* &&
-   $plan == *'GitHub HTTPS credential helper'* ]]
+   $plan == *'GitHub HTTPS credential helper'* && $plan == *'Tailscale'* &&
+   $plan != *'idle system sleep'* && $plan != *'Remote Login'* && $plan != *'Screen Sharing'* ]]
+plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt --always-on)
+[[ $plan != *'Command Line Tools'* && $plan == *'Tailscale'* && $plan == *'idle system sleep on AC power'* &&
+   $plan == *'restart after power loss if supported'* && $plan == *'Remote Login and Screen Sharing for selected users'* ]]
+[[ -z $(/bin/ls -A "$HOME") ]]
 rc=0
 report=$(/bin/bash "$ROOT/bootstrap.sh" --doctor) || rc=$?
 [[ $rc == 1 && $report == *'CHECK Managed zsh config:'* && $report == *'CHECK fx:'* &&
@@ -30,6 +35,18 @@ report=$(/bin/bash "$ROOT/bootstrap.sh" --doctor) || rc=$?
 rc=0
 /bin/bash "$ROOT/bootstrap.sh" --doctor --dry-run >/dev/null 2>&1 || rc=$?
 [[ $rc == 64 ]]
+rc=0
+/bin/bash "$ROOT/bootstrap.sh" --doctor --always-on >/dev/null 2>&1 || rc=$?
+[[ $rc == 64 ]]
+
+# Keep an existing Tailscale bundle without downloading or invoking the installer.
+(
+  mkdir -p "$HOME/Applications/Tailscale.app/Contents"
+  touch "$HOME/Applications/Tailscale.app/Contents/Info.plist"
+  WORK=$scratch
+  download() { printf 'Reinstall tried to download Tailscale\n' >&2; exit 1; }
+  [[ $(install_tailscale) == 'Keeping existing Tailscale.app' ]]
+)
 
 # Exercise the verified binary installer without a network request.
 (

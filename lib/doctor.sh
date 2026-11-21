@@ -127,6 +127,7 @@ run_doctor() {
   doctor_app Ghostty
   doctor_app Rectangle
   doctor_app 'Google Chrome'
+  doctor_app Tailscale
   doctor_rectangle com.knollsoft.Rectangle
   doctor_input
   printf '\n%d item(s) to review. No changes made.\n' "$DOCTOR_ISSUES"

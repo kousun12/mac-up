@@ -4,29 +4,32 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: ./bootstrap.sh [--dry-run] [--skip-clt]
+Usage: ./bootstrap.sh [--dry-run] [--skip-clt] [--always-on]
        ./bootstrap.sh --doctor
 
-  --dry-run   Print the planned changes without making them or using the network.
-  --skip-clt  Skip Apple's Command Line Tools install/update check on this run.
-  --doctor    Check local tools, apps, and preferences without changing anything.
+  --dry-run    Print the planned changes without making them or using the network.
+  --skip-clt   Skip Apple's Command Line Tools install/update check on this run.
+  --always-on  Keep this Mac awake on AC power and guide remote access setup.
+  --doctor     Check local tools, apps, and preferences without changing anything.
 EOF
 }
 
 DRY_RUN=0
 SKIP_CLT=0
+ALWAYS_ON=0
 DOCTOR=0
 for arg in "$@"; do
   case $arg in
     --dry-run) DRY_RUN=1 ;;
     --skip-clt) SKIP_CLT=1 ;;
+    --always-on) ALWAYS_ON=1 ;;
     --doctor) DOCTOR=1 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; exit 64 ;;
   esac
 done
 
-if (( DOCTOR && (DRY_RUN || SKIP_CLT) )); then
+if (( DOCTOR && (DRY_RUN || SKIP_CLT || ALWAYS_ON) )); then
   usage >&2
   exit 64
 fi
@@ -44,9 +47,14 @@ if (( DRY_RUN )); then
     '• Set /bin/zsh as the login shell if needed; add a managed config without replacing .zshrc.' \
     '• Install nvm, uv, uvx, fx, rg, jq, fzf, gh, and zsh-syntax-highlighting if missing.' \
     '• Configure gh as Git’s GitHub HTTPS credential helper if signed in.' \
-    '• Install Ghostty, Rectangle, and current stable Google Chrome if missing.' \
+    '• Install Ghostty, Rectangle, current stable Google Chrome, and Tailscale if missing.' \
     '• Restore Rectangle shortcuts, fast repeat with a short initial delay, and mouse/trackpad tracking speeds.' \
     '• Set Caps Lock to Control for detected keyboards without replacing existing modifier mappings.'
+  if (( ALWAYS_ON )); then
+    printf '%s\n' \
+      '• Disable idle system sleep on AC power and enable restart after power loss if supported.' \
+      '• Finish manually in System Settings > General > Sharing: enable Remote Login and Screen Sharing for selected users.'
+  fi
   exit 0
 fi
 
@@ -90,9 +98,16 @@ install_apps
 configure_rectangle
 input_preferences
 configure_caps_lock
+if (( ALWAYS_ON )); then
+  configure_always_on
+fi
 
 printf '\nOpen a new terminal tab for zsh changes. Log out and back in for keyboard and pointer settings.\n'
 printf 'At Rectangle’s first launch, grant Accessibility permission and choose the Rectangle preset if asked.\n'
+printf 'Open Tailscale, approve its VPN setup, and sign in to your tailnet.\n'
+if (( ALWAYS_ON )); then
+  always_on_sharing_instructions
+fi
 if (( CLT_PENDING )); then
   warn 'Command Line Tools are pending. Finish Apple’s install/update, then rerun ./bootstrap.sh.'
   exit 2
