@@ -2,3 +2,34 @@
 alias gst='git status'
 alias gd='git diff'
 alias glog='git log --oneline --pretty=format:"%C(green bold dim)%h%Creset %C(auto)%d %C(cyan bold)%an%Creset %s %C(blue bold)(%cr)%Creset" --decorate --abbrev-commit --date=relative'
+
+# Switch to the repo's default branch without needing Oh My Zsh.
+gcm() {
+  local remote ref branch
+  git rev-parse --show-toplevel >/dev/null || return
+  for remote in origin upstream; do
+    if ref=$(git symbolic-ref --quiet "refs/remotes/$remote/HEAD") &&
+       git show-ref --verify --quiet "$ref"; then
+      git switch "$@" -- "${ref#refs/remotes/$remote/}"
+      return
+    fi
+  done
+  for branch in main trunk mainline default stable master; do
+    if git show-ref --verify --quiet "refs/heads/$branch"; then
+      git switch "$@" -- "$branch"
+      return
+    fi
+  done
+  printf 'gcm: could not find the default branch\n' >&2
+  return 1
+}
+
+# Push the current branch to origin.
+ggpush() {
+  local branch
+  if ! branch=$(git symbolic-ref --quiet --short HEAD); then
+    printf 'ggpush: not on a local branch\n' >&2
+    return 1
+  fi
+  command git push origin "$branch" "$@"
+}

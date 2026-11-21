@@ -64,6 +64,7 @@ PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/zsh -ic '
   set -e
   [[ $MAC_UP_TEST == untouched && $path[1] == "$HOME/.local/bin" ]]
   [[ $aliases[gst] == "git status" && $aliases[gd] == "git diff" && $aliases[glog] == "git log --oneline --pretty=format:"* ]]
+  (( $+functions[gcm] && $+functions[ggpush] ))
   [[ $HISTFILE == "$HOME/.zsh_history" && $HISTSIZE == 300000 && $SAVEHIST == 250000 ]]
   for map in emacs viins; do
     [[ $(bindkey -M "$map" "^R") == *" history-incremental-search-backward" ]]
@@ -100,6 +101,35 @@ pty_output=$(/usr/bin/script -q /dev/null /bin/zsh -ic '
   print "fzf history binding verified"
 ' </dev/null)
 [[ $pty_output == *'fzf history binding verified'* ]]
+
+# Switch branches only in a disposable repo; intercept ggpush before any push.
+/bin/bash -n "$HOME/.bash_aliases"
+if /usr/bin/xcode-select -p >/dev/null 2>&1; then (
+  source "$HOME/.bash_aliases"
+  git init -q -b master "$scratch/git-repo"
+  cd "$scratch/git-repo"
+  git -c user.name=Fixture -c user.email=fixture@example.invalid commit -qm 'Initial commit' --allow-empty
+  git switch -qc feature
+  gcm
+  [[ $(git branch --show-current) == master ]]
+  git branch release
+  git update-ref refs/remotes/origin/release HEAD
+  git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/release
+  gcm
+  [[ $(git branch --show-current) == release ]]
+
+  mkdir "$scratch/git-stub"
+  cat > "$scratch/git-stub/git" <<'EOF'
+#!/bin/sh
+if [ "$1" = push ]; then
+  printf '%s\n' "$@"
+else
+  exec /usr/bin/git "$@"
+fi
+EOF
+  chmod +x "$scratch/git-stub/git"
+  [[ $(PATH="$scratch/git-stub:$PATH" ggpush --dry-run) == $'push\norigin\nrelease\n--dry-run' ]]
+); fi
 
 label=$(latest_clt_label <<'EOF'
 * Label: Command Line Tools for Xcode-16.10
