@@ -1,23 +1,27 @@
 # Sourced by bootstrap.sh (macOS stock Bash).
+ZSH_LOADER='[[ ! -r "$HOME/.config/mac-up/zshrc.zsh" ]] || source "$HOME/.config/mac-up/zshrc.zsh"'
+
+read_login_shell() {
+  /usr/bin/dscl . -read "/Users/$(/usr/bin/id -un)" UserShell
+}
+
 login_shell() {
-  local account current
-  account=$(/usr/bin/id -un)
-  current=$(/usr/bin/dscl . -read "/Users/$account" UserShell)
+  local current
+  current=$(read_login_shell)
   if [[ $current != 'UserShell: /bin/zsh' ]]; then
     /usr/bin/chsh -s /bin/zsh
   fi
 }
 
 install_zsh_config() {
-  local zdotdir=${ZDOTDIR:-$HOME} rc managed stanza
+  local zdotdir=${ZDOTDIR:-$HOME} rc managed
   rc=$zdotdir/.zshrc
   managed=$HOME/.config/mac-up/zshrc.zsh
-  stanza='[[ ! -r "$HOME/.config/mac-up/zshrc.zsh" ]] || source "$HOME/.config/mac-up/zshrc.zsh"'
   mkdir -p "$zdotdir" "${managed%/*}"
   if [[ ! -e $managed ]] || ! cmp -s "$ROOT/config/zshrc.zsh" "$managed"; then
     install -m 644 "$ROOT/config/zshrc.zsh" "$managed"
   fi
-  if [[ -f $rc ]] && grep -Fqx -- "$stanza" "$rc"; then
+  if [[ -f $rc ]] && grep -Fqx -- "$ZSH_LOADER" "$rc"; then
     return
   fi
   if [[ -e $rc || -L $rc ]]; then
@@ -27,14 +31,19 @@ install_zsh_config() {
     cp -p "$rc" "$backup"
     printf 'Backed up zsh config to %s\n' "$backup"
   fi
-  printf '\n# mac-up\n%s\n' "$stanza" >> "$rc"
+  printf '\n# mac-up\n%s\n' "$ZSH_LOADER" >> "$rc"
+}
+
+input_preferences_table() {
+  printf '%s\n' 'KeyRepeat int 2' 'InitialKeyRepeat int 60' \
+    'com.apple.mouse.scaling float 2' 'com.apple.trackpad.scaling float 3'
 }
 
 input_preferences() {
-  /usr/bin/defaults write -g KeyRepeat -int 2
-  /usr/bin/defaults write -g InitialKeyRepeat -int 60
-  /usr/bin/defaults write -g com.apple.mouse.scaling -float 2
-  /usr/bin/defaults write -g com.apple.trackpad.scaling -float 3
+  local key type value
+  while read -r key type value; do
+    /usr/bin/defaults write -g "$key" "-$type" "$value"
+  done < <(input_preferences_table)
 }
 
 keyboard_keys() {
@@ -56,11 +65,14 @@ caps_is_control() {
   '
 }
 
+detected_keyboard_keys() {
+  /usr/bin/hidutil list --matching '{"PrimaryUsagePage":1,"PrimaryUsage":6}' | keyboard_keys
+}
+
 configure_caps_lock() {
-  local devices keys key existing
+  local keys key existing
   local mapping='<dict><key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer><key>HIDKeyboardModifierMappingDst</key><integer>30064771300</integer></dict>'
-  if ! devices=$(/usr/bin/hidutil list --matching '{"PrimaryUsagePage":1,"PrimaryUsage":6}') ||
-     ! keys=$(printf '%s\n' "$devices" | keyboard_keys) || [[ -z $keys ]]; then
+  if ! keys=$(detected_keyboard_keys) || [[ -z $keys ]]; then
     warn 'No keyboard IDs found. Set Caps Lock to Control in System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys.'
     return
   fi

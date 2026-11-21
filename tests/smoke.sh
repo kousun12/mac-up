@@ -3,6 +3,7 @@ set -euo pipefail
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 source "$ROOT/lib/install.sh"
 source "$ROOT/lib/settings.sh"
+source "$ROOT/lib/doctor.sh"
 warn() { printf 'Warning: %s\n' "$*" >&2; }
 
 for file in "$ROOT/bootstrap.sh" "$ROOT"/lib/*.sh "$ROOT/tests/smoke.sh"; do
@@ -19,6 +20,13 @@ mkdir -p "$HOME"
 [[ -z $(/bin/ls -A "$HOME") ]]
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
 [[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* ]]
+rc=0
+report=$(/bin/bash "$ROOT/bootstrap.sh" --doctor) || rc=$?
+[[ $rc == 1 && $report == *'CHECK Managed zsh config:'* && $report == *'CHECK fx:'* && $report == *'No changes made.'* ]]
+[[ -z $(/bin/ls -A "$HOME") ]]
+rc=0
+/bin/bash "$ROOT/bootstrap.sh" --doctor --dry-run >/dev/null 2>&1 || rc=$?
+[[ $rc == 64 ]]
 
 printf '# Existing config\nexport MAC_UP_TEST=untouched\n' > "$HOME/.zshrc"
 cp "$HOME/.zshrc" "$scratch/original"
@@ -72,4 +80,11 @@ apply_rectangle_shortcuts "$domain"
 [[ $(/usr/bin/defaults read "$domain" firstThird) == *'keyCode = 123;'* ]]
 [[ $(/usr/bin/defaults read "$domain" lastTwoThirds) == *'keyCode = 124;'* ]]
 [[ $(/usr/bin/defaults read "$domain" maximize) == *'modifierFlags = 786432;'* ]]
+DOCTOR_ISSUES=0
+doctor_rectangle "$domain"
+[[ $DOCTOR_ISSUES == 0 ]]
+/usr/bin/defaults write "$domain" maximize -dict
+doctor_rectangle "$domain"
+[[ $DOCTOR_ISSUES == 1 ]]
+[[ $(/usr/bin/defaults read "$domain" maximize | tr -d '[:space:]') == '{}' ]]
 printf 'mac-up smoke checks passed\n'

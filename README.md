@@ -28,7 +28,15 @@ At Rectangle's first launch, grant Accessibility permission in System Settings a
 
 Caps Lock uses macOS's per-keyboard modifier preferences, not an app that monitors keystrokes. Connect the keyboard before running; rerun for newly connected keyboards. If a keyboard isn't detected or has a conflicting custom mapping, use **System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys** to set it without changing your other mappings.
 
-## Check before changing it
+## Check an existing Mac
+
+```sh
+./bootstrap.sh --doctor
+```
+
+Doctor checks the login shell and managed zsh files, installed dev tools and apps, saved Rectangle shortcuts, keyboard repeat, pointer speeds, and the saved Caps Lock mappings for detected keyboards. It reads local state only: no installs, network calls, app launches, or changes to preferences. It exits `0` if the checked settings match and `1` if it reports anything to review. A manually configured Mac can work fine even if its settings differ from the bootstrap. Doctor does not check for available updates or verify live key behavior or Rectangle's Accessibility permission.
+
+To test the script itself without changing your setup:
 
 ```sh
 /bin/bash tests/smoke.sh

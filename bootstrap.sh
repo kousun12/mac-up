@@ -5,22 +5,31 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage: ./bootstrap.sh [--dry-run] [--skip-clt]
+       ./bootstrap.sh --doctor
 
   --dry-run   Print the planned changes without making them or using the network.
   --skip-clt  Skip Apple's Command Line Tools install/update check on this run.
+  --doctor    Check local tools, apps, and preferences without changing anything.
 EOF
 }
 
 DRY_RUN=0
 SKIP_CLT=0
+DOCTOR=0
 for arg in "$@"; do
   case $arg in
     --dry-run) DRY_RUN=1 ;;
     --skip-clt) SKIP_CLT=1 ;;
+    --doctor) DOCTOR=1 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; exit 64 ;;
   esac
 done
+
+if (( DOCTOR && (DRY_RUN || SKIP_CLT) )); then
+  usage >&2
+  exit 64
+fi
 
 if [[ $(/usr/bin/uname -s) != Darwin ]]; then
   printf 'mac-up only runs on macOS.\n' >&2
@@ -46,12 +55,18 @@ if (( EUID == 0 )); then
 fi
 
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-source "$ROOT/lib/install.sh"
 source "$ROOT/lib/settings.sh"
 warn() { printf 'Warning: %s\n' "$*" >&2; }
 
 MACOS_VERSION=$(/usr/bin/sw_vers -productVersion)
 MACOS_MAJOR=${MACOS_VERSION%%.*}
+if (( DOCTOR )); then
+  source "$ROOT/lib/doctor.sh"
+  run_doctor
+  exit 0
+fi
+
+source "$ROOT/lib/install.sh"
 if (( MACOS_MAJOR < 14 )); then
   warn 'mac-up requires macOS 14 or later for the full app setup.'
   exit 1
