@@ -52,6 +52,56 @@ install_archive() (
   [[ ! -e $stage/$name ]] || { warn "Destination appeared during install: $dest"; return 1; }
 )
 
+install_release_binary() (
+  local dest=$1 url=$2 sha256=$3 archive_entry=${4:-} stage source
+  if [[ -f $dest && -x $dest ]]; then
+    printf 'Keeping existing %s\n' "$dest"
+    return
+  fi
+  [[ ! -e $dest && ! -L $dest ]] || { warn "Refusing to overwrite $dest"; return 1; }
+  stage=$(mktemp -d "${dest%/*}/.mac-up.XXXXXXXX")
+  trap 'rm -rf -- "$stage"' EXIT
+  printf 'Installing %s\n' "${dest##*/}"
+  source=$stage/download
+  download "$url" "$source"
+  if ! printf '%s  %s\n' "$sha256" "$source" | /usr/bin/shasum -a 256 -c --status; then
+    warn "Checksum verification failed for $url"
+    return 1
+  fi
+  if [[ -n $archive_entry ]]; then
+    /usr/bin/tar -xzf "$source" -C "$stage" "$archive_entry"
+    source=$stage/$archive_entry
+  fi
+  /usr/bin/install -m 755 "$source" "$stage/executable"
+  /bin/mv -n "$stage/executable" "$dest"
+  [[ ! -e $stage/executable ]] || { warn "Destination appeared during install: $dest"; return 1; }
+)
+
+install_portable_tools() {
+  local bin=$HOME/.local/bin rg_version=15.2.0 jq_version=1.8.2
+  local rg_target rg_sha jq_target jq_sha rg_package
+  case $(/usr/bin/uname -m) in
+    arm64)
+      rg_target=aarch64-apple-darwin
+      rg_sha=3750b2e93f37e0c692657da574d7019a101c0084da05a790c83fd335bad973e4
+      jq_target=arm64
+      jq_sha=2d75340ba57a4b4b4c8708a21c2dc8e958a48aaa8bba13b27f77f6e4c0eca07e
+      ;;
+    x86_64)
+      rg_target=x86_64-apple-darwin
+      rg_sha=af7825fcc69a2afc7a7aea55fc9af90e26421d8f20fe59df32e233c0b8a231c1
+      jq_target=amd64
+      jq_sha=e94b266e3c26690550006abe63152b782280f4e14374accdf04cbde844f00bc0
+      ;;
+    *) warn 'No rg or jq binaries configured for this architecture'; return 1 ;;
+  esac
+  mkdir -p "$bin"
+  rg_package=ripgrep-$rg_version-$rg_target
+  install_release_binary "$bin/rg" "https://github.com/BurntSushi/ripgrep/releases/download/$rg_version/$rg_package.tar.gz" \
+    "$rg_sha" "$rg_package/rg"
+  install_release_binary "$bin/jq" "https://github.com/jqlang/jq/releases/download/jq-$jq_version/jq-macos-$jq_target" "$jq_sha"
+}
+
 install_developer_tools() {
   local nvm_version=0.41.0 highlight_version=0.8.0
   install_archive "https://codeload.github.com/nvm-sh/nvm/tar.gz/refs/tags/v$nvm_version" \

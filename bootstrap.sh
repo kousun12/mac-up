@@ -42,9 +42,9 @@ if (( DRY_RUN )); then
   fi
   printf '%s\n' \
     '• Set /bin/zsh as the login shell if needed; add a managed config without replacing .zshrc.' \
-    '• Install nvm, uv, uvx, fx, and zsh-syntax-highlighting if missing.' \
+    '• Install nvm, uv, uvx, fx, rg, jq, and zsh-syntax-highlighting if missing.' \
     '• Install Ghostty, Rectangle, and current stable Google Chrome if missing.' \
-    '• Restore Rectangle shortcuts, fast repeat with a long initial delay, and mouse/trackpad tracking speeds.' \
+    '• Restore Rectangle shortcuts, fast repeat with a short initial delay, and mouse/trackpad tracking speeds.' \
     '• Set Caps Lock to Control for detected keyboards without replacing existing modifier mappings.'
   exit 0
 fi
@@ -81,6 +81,7 @@ fi
 login_shell
 install_zsh_config
 install_developer_tools
+install_portable_tools
 install_apps
 configure_rectangle
 input_preferences

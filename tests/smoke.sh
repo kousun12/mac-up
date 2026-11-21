@@ -19,14 +19,33 @@ mkdir -p "$HOME"
 /bin/bash "$ROOT/bootstrap.sh" --dry-run | grep -F 'Command Line Tools' >/dev/null
 [[ -z $(/bin/ls -A "$HOME") ]]
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
-[[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* ]]
+[[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq'* ]]
 rc=0
 report=$(/bin/bash "$ROOT/bootstrap.sh" --doctor) || rc=$?
-[[ $rc == 1 && $report == *'CHECK Managed zsh config:'* && $report == *'CHECK fx:'* && $report == *'No changes made.'* ]]
+[[ $rc == 1 && $report == *'CHECK Managed zsh config:'* && $report == *'CHECK fx:'* &&
+   $report == *'CHECK rg:'* && $report == *'CHECK jq:'* && $report == *'No changes made.'* ]]
 [[ -z $(/bin/ls -A "$HOME") ]]
 rc=0
 /bin/bash "$ROOT/bootstrap.sh" --doctor --dry-run >/dev/null 2>&1 || rc=$?
 [[ $rc == 64 ]]
+
+# Exercise the verified binary installer without a network request.
+(
+  mkdir -p "$scratch/bin"
+  printf '#!/bin/sh\nprintf "fixture\\n"\n' > "$scratch/asset"
+  sha=$(/usr/bin/shasum -a 256 < "$scratch/asset")
+  sha=${sha%% *}
+  download() { cp "$scratch/asset" "$2"; }
+  install_release_binary "$scratch/bin/tool" fixture "$sha"
+  [[ $("$scratch/bin/tool") == fixture ]]
+  download() { printf 'Reinstall tried to download an existing tool\n' >&2; exit 1; }
+  install_release_binary "$scratch/bin/tool" fixture "$sha"
+  download() { printf 'corrupted\n' > "$2"; }
+  rc=0
+  install_release_binary "$scratch/bin/bad" fixture "$sha" 2> "$scratch/checksum.log" || rc=$?
+  [[ $rc == 1 && ! -e $scratch/bin/bad ]]
+  grep -Fq 'Checksum verification failed' "$scratch/checksum.log"
+)
 
 printf '# Existing config\nexport MAC_UP_TEST=untouched\n' > "$HOME/.zshrc"
 cp "$HOME/.zshrc" "$scratch/original"
