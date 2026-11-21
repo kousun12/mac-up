@@ -48,7 +48,8 @@ if (( DRY_RUN )); then
     '• Install nvm, uv, uvx, fx, rg, jq, fzf, gh, and zsh-syntax-highlighting if missing.' \
     '• Configure gh as Git’s GitHub HTTPS credential helper if signed in.' \
     '• Install Ghostty, Rectangle, current stable Google Chrome, and Tailscale if missing.' \
-    '• Restore Rectangle shortcuts, fast repeat with a short initial delay, and mouse/trackpad tracking speeds.' \
+    '• Restore Rectangle shortcuts and configure Rectangle to open at login.' \
+    '• Restore fast repeat with a short initial delay and mouse/trackpad tracking speeds.' \
     '• Set Caps Lock to Control for detected keyboards without replacing existing modifier mappings.'
   if (( ALWAYS_ON )); then
     printf '%s\n' \

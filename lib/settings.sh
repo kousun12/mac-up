@@ -109,12 +109,25 @@ apply_rectangle_shortcuts() {
   done < "$ROOT/config/rectangle-shortcuts.tsv"
 }
 
+enable_rectangle_login() {
+  # Rectangle reads this preference on startup and registers its own login item.
+  /usr/bin/defaults write "$1" launchOnLogin -bool true
+}
+
 configure_rectangle() {
+  local domain=com.knollsoft.Rectangle app=/Applications/Rectangle.app
+  enable_rectangle_login "$domain"
   if /usr/bin/pgrep -u "$(/usr/bin/id -u)" -x Rectangle >/dev/null; then
-    warn 'Rectangle is running. Quit it and rerun mac-up to apply the saved shortcuts.'
+    warn 'Rectangle is running. Quit it and rerun mac-up to apply shortcuts and register it at login.'
     return
   fi
-  apply_rectangle_shortcuts com.knollsoft.Rectangle
+  apply_rectangle_shortcuts "$domain"
+  if [[ ! -f $app/Contents/Info.plist ]]; then
+    app=$HOME/Applications/Rectangle.app
+  fi
+  if ! /usr/bin/open -g "$app"; then
+    warn 'Could not start Rectangle. Open it manually to register it at login.'
+  fi
 }
 
 configure_always_on() {

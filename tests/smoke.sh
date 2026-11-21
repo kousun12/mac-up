@@ -21,6 +21,7 @@ mkdir -p "$HOME"
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
 [[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq, fzf, gh'* &&
    $plan == *'GitHub HTTPS credential helper'* && $plan == *'Tailscale'* &&
+   $plan == *'configure Rectangle to open at login'* &&
    $plan != *'idle system sleep'* && $plan != *'Remote Login'* && $plan != *'Screen Sharing'* ]]
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt --always-on)
 [[ $plan != *'Command Line Tools'* && $plan == *'Tailscale'* && $plan == *'idle system sleep on AC power'* &&
@@ -198,6 +199,10 @@ fi
 
 domain="$scratch/rectangle"
 /usr/bin/defaults write "$domain" unrelated -string preserved
+/usr/bin/defaults write "$domain" launchOnLogin -bool false
+enable_rectangle_login "$domain"
+enable_rectangle_login "$domain"
+[[ $(/usr/bin/defaults read "$domain" launchOnLogin) == 1 ]]
 apply_rectangle_shortcuts "$domain"
 apply_rectangle_shortcuts "$domain"
 [[ $(/usr/bin/defaults read "$domain" unrelated) == preserved ]]

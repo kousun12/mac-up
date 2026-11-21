@@ -13,7 +13,7 @@ Download and unzip a copy of this repo if Git isn't installed yet. In Terminal o
 
 Run as your normal logged-in user, not with `sudo`. The script may ask for admin access to install apps, including Tailscale, apply an Apple Command Line Tools update, or change power settings in `--always-on` mode. If the tools are missing, accept Apple's install dialog; mac-up does the rest of its work and exits with status 2 while the tools are pending. Rerun after the Apple installer finishes. Use `--skip-clt` to skip the installer/update check on a particular run.
 
-At Rectangle's first launch, grant Accessibility permission in System Settings and choose the Rectangle preset if asked. If Rectangle was already running, quit it and rerun to apply shortcuts. Open a new tab for the zsh changes, and log out and back in for the input preferences.
+mac-up configures Rectangle to open at login and starts it to register the login item. At first launch, grant Accessibility permission in System Settings and choose the Rectangle preset if asked. If Rectangle was already running, quit it and rerun mac-up to apply shortcuts and register it at login. Open a new tab for the zsh changes, and log out and back in for the input preferences.
 
 For GitHub HTTPS remotes (including `ggpush`), mac-up configures `gh` as Git's credential helper if you're already signed in. On a fresh setup, sign in and enable it when you're ready:
 
