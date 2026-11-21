@@ -15,12 +15,21 @@ Run as your normal logged-in user, not with `sudo`. The script only asks for adm
 
 At Rectangle's first launch, grant Accessibility permission in System Settings and choose the Rectangle preset if asked. If Rectangle was already running, quit it and rerun to apply shortcuts. Open a new tab for the zsh changes, and log out and back in for the input preferences.
 
+For GitHub HTTPS remotes (including `ggpush`), mac-up configures `gh` as Git's credential helper if you're already signed in. On a fresh setup, sign in and enable it when you're ready:
+
+```sh
+gh auth login --hostname github.com --git-protocol https
+gh auth setup-git --hostname github.com
+```
+
+This affects GitHub HTTPS credentials only; SSH remotes and your Git author identity are unchanged.
+
 ## What it sets up
 
 | Area | Configuration |
 | --- | --- |
 | zsh | Login shell, persistent history (250,000 saved commands, 300,000 in memory), Ctrl-R fuzzy history search with a built-in fallback, syntax highlighting, and a compact directory/Git branch prompt. Appends one loader to `.zshrc`, backing up the existing file first. Loads `~/.bash_aliases`, seeded with `gst`, `gd`, `glog`, `gcm`, and `ggpush` only if the file is missing. |
-| Dev tools | `nvm`, `uv`/`uvx`, [fx](https://fx.sh/), [ripgrep (`rg`)](https://github.com/BurntSushi/ripgrep), [jq](https://jqlang.org/), and [fzf](https://github.com/junegunn/fzf) for the current user. `rg`, `jq`, and `fzf` use pinned, checksum-verified upstream binaries. Does not install language runtimes or copy credentials. |
+| Dev tools | `nvm`, `uv`/`uvx`, [fx](https://fx.sh/), [ripgrep (`rg`)](https://github.com/BurntSushi/ripgrep), [jq](https://jqlang.org/), and [fzf](https://github.com/junegunn/fzf) for the current user. Also installs [GitHub CLI (`gh`)](https://cli.github.com/). `rg`, `jq`, `fzf`, and `gh` use pinned, checksum-verified upstream binaries. Does not install language runtimes or copy credentials. |
 | Apps | [Ghostty](https://ghostty.org/), [Rectangle](https://rectangleapp.com/), and the current stable [Chrome](https://www.google.com/chrome/) from vendor disk images. Existing app bundles are left alone; use their built-in updaters. |
 | Rectangle | The Rectangle preset plus the [saved overrides](config/rectangle-shortcuts.tsv), including Ctrl-Option-Left/Right for thirds and Ctrl-Option-F to maximize. |
 | Input | Fast key repeat (`2`) with a short initial delay (`15`), mouse tracking `2`, trackpad tracking `3`, and Caps Lock as Control. |

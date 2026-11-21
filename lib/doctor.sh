@@ -45,7 +45,7 @@ doctor_tools() {
   fi
   doctor_file nvm "${NVM_DIR:-$HOME/.nvm}/nvm.sh" readable
   doctor_file 'zsh syntax highlighting' "$HOME/.local/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" readable
-  for tool in fx uv uvx rg jq fzf; do
+  for tool in fx uv uvx rg jq fzf gh; do
     doctor_file "$tool" "$bin/$tool" executable
   done
 }

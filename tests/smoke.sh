@@ -19,11 +19,12 @@ mkdir -p "$HOME"
 /bin/bash "$ROOT/bootstrap.sh" --dry-run | grep -F 'Command Line Tools' >/dev/null
 [[ -z $(/bin/ls -A "$HOME") ]]
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
-[[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq, fzf'* ]]
+[[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq, fzf, gh'* &&
+   $plan == *'GitHub HTTPS credential helper'* ]]
 rc=0
 report=$(/bin/bash "$ROOT/bootstrap.sh" --doctor) || rc=$?
 [[ $rc == 1 && $report == *'CHECK Managed zsh config:'* && $report == *'CHECK fx:'* &&
-   $report == *'CHECK rg:'* && $report == *'CHECK jq:'* && $report == *'CHECK fzf:'* &&
+   $report == *'CHECK rg:'* && $report == *'CHECK jq:'* && $report == *'CHECK fzf:'* && $report == *'CHECK gh:'* &&
    $report == *'No changes made.'* ]]
 [[ -z $(/bin/ls -A "$HOME") ]]
 rc=0
@@ -101,6 +102,27 @@ pty_output=$(/usr/bin/script -q /dev/null /bin/zsh -ic '
   print "fzf history binding verified"
 ' </dev/null)
 [[ $pty_output == *'fzf history binding verified'* ]]
+
+# Test the HTTPS helper setup without contacting GitHub or writing Git config.
+if /usr/bin/xcode-select -p >/dev/null 2>&1; then
+  (
+    export GH_SETUP_LOG="$scratch/gh-setup.log" GH_TEST_SIGNED=0
+    cat > "$HOME/.local/bin/gh" <<'EOF'
+#!/bin/sh
+case "$*" in
+  'auth status --hostname github.com') [ "$GH_TEST_SIGNED" = 1 ] ;;
+  'auth setup-git --hostname github.com') printf '%s\n' "$*" >> "$GH_SETUP_LOG" ;;
+  *) exit 64 ;;
+esac
+EOF
+    chmod +x "$HOME/.local/bin/gh"
+    instructions=$(configure_github_credentials)
+    [[ $instructions == *'gh auth login --hostname github.com --git-protocol https'* && ! -e $GH_SETUP_LOG ]]
+    GH_TEST_SIGNED=1
+    configure_github_credentials
+    grep -Fxq 'auth setup-git --hostname github.com' "$GH_SETUP_LOG"
+  )
+fi
 
 # Switch branches only in a disposable repo; intercept ggpush before any push.
 /bin/bash -n "$HOME/.bash_aliases"

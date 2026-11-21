@@ -69,7 +69,11 @@ install_release_binary() (
     return 1
   fi
   if [[ -n $archive_entry ]]; then
-    /usr/bin/tar -xzf "$source" -C "$stage" "$archive_entry"
+    if [[ $url == *.zip ]]; then
+      /usr/bin/unzip -q "$source" "$archive_entry" -d "$stage"
+    else
+      /usr/bin/tar -xzf "$source" -C "$stage" "$archive_entry"
+    fi
     source=$stage/$archive_entry
   fi
   /usr/bin/install -m 755 "$source" "$stage/executable"
@@ -111,6 +115,32 @@ install_fzf() {
   esac
   mkdir -p "$bin"
   install_release_binary "$bin/fzf" "https://github.com/junegunn/fzf/releases/download/v$version/fzf-$version-darwin_$target.tar.gz" "$sha" fzf
+}
+
+install_github_cli() {
+  local bin=$HOME/.local/bin version=2.105.0 target sha package
+  case $(/usr/bin/uname -m) in
+    arm64) target=arm64; sha=2a5d03103ae444927383b93d9ffd65579a26e2eb900ce1cf11f55258d5319ded ;;
+    x86_64) target=amd64; sha=23602cbccbbdc6285a8520745b714cb927ce2ca621779373c2a20cd8e33fda66 ;;
+    *) warn 'No gh binary configured for this architecture'; return 1 ;;
+  esac
+  mkdir -p "$bin"
+  package=gh_${version}_macOS_$target
+  install_release_binary "$bin/gh" "https://github.com/cli/cli/releases/download/v$version/$package.zip" "$sha" "$package/bin/gh"
+}
+
+configure_github_credentials() {
+  local gh=$HOME/.local/bin/gh
+  if ! /usr/bin/xcode-select -p >/dev/null 2>&1; then
+    printf 'After Apple’s installer finishes, rerun mac-up to finish GitHub credential setup.\n'
+  elif "$gh" auth status --hostname github.com >/dev/null 2>&1; then
+    "$gh" auth setup-git --hostname github.com
+    printf 'GitHub CLI is configured as Git’s HTTPS credential helper for GitHub.\n'
+  else
+    printf '%s\n' 'To enable GitHub HTTPS credentials, sign in and configure the helper:' \
+      '  gh auth login --hostname github.com --git-protocol https' \
+      '  gh auth setup-git --hostname github.com'
+  fi
 }
 
 install_developer_tools() {
