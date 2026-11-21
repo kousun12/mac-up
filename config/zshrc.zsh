@@ -22,7 +22,7 @@ if [[ -t 0 && -o zle ]] && (( $+commands[fzf] )); then
   )
 fi
 
-PROMPT='%B%F{cyan}%~%f%b%1(V. %F{yellow}%1v%f.) %# '
+PROMPT='%B%F{cyan}%~%f%b%1(V. %F{yellow}%1v%f.) '
 if (( $+commands[git] )) &&
    { [[ $commands[git] != /usr/bin/git ]] || xcode-select -p >/dev/null 2>&1; }; then
   autoload -Uz add-zsh-hook vcs_info

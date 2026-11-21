@@ -71,7 +71,8 @@ PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/zsh -ic '
     [[ $(bindkey -M "$map" "^R") == *" history-incremental-search-backward" ]]
   done
   psvar[1]="(main)"
-  [[ $(print -P -- "$PROMPT") == *"(main)"* ]]
+  rendered=$(print -P -- "$PROMPT")
+  [[ $rendered == *"(main)"*" " && $rendered != *"% " && $rendered != *"# " ]]
 '
 
 mkdir -p "$HOME/.local/bin"
