@@ -55,12 +55,14 @@ label=$(latest_clt_label <<'EOF'
 EOF
 )
 [[ $label == 'Command Line Tools for Xcode-16.10' ]]
+[[ $(input_preferences_table) == *'InitialKeyRepeat int 15'* ]]
 
 keys=$(keyboard_keys <<'EOF'
 VendorID ProductID LocationID UsagePage Usage RegistryID Transport Class Product
 0x19f5 0x1028 0x2120000 1 6 0x100001129 USB HID Keyboard
 0x19f5 0x1028 0x2120000 1 6 0x100001129 USB HID Keyboard duplicate
-0x46d 0xb023 0x36322a89 1 2 0x10000116b Bluetooth HID Mouse
+0x46d 0xb023 0x36322a89 1 6 0x10000116b Bluetooth HID MX Master 3 keyboard interface
+0x46d 0xb023 0x36322a89 1 2 0x10000116c Bluetooth HID MX Master 3 mouse interface
 EOF
 )
 [[ $keys == com.apple.keyboard.modifiermapping.6645-4136-0 ]]

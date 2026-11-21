@@ -35,7 +35,7 @@ install_zsh_config() {
 }
 
 input_preferences_table() {
-  printf '%s\n' 'KeyRepeat int 2' 'InitialKeyRepeat int 60' \
+  printf '%s\n' 'KeyRepeat int 2' 'InitialKeyRepeat int 15' \
     'com.apple.mouse.scaling float 2' 'com.apple.trackpad.scaling float 3'
 }
 
@@ -51,6 +51,10 @@ keyboard_keys() {
   # hidutil reports both services and devices as hex vendor/product pairs.
   awk '$1 ~ /^0x[[:xdigit:]]+$/ && $2 ~ /^0x[[:xdigit:]]+$/ && $4 == 1 && $5 == 6 {print $1, $2}' |
     while read -r vendor product; do
+      # The Bluetooth Logitech MX Master 3 advertises a keyboard interface.
+      if (( vendor == 0x046d && product == 0xb023 )); then
+        continue
+      fi
       printf 'com.apple.keyboard.modifiermapping.%d-%d-0\n' "$vendor" "$product"
     done | LC_ALL=C sort -u
 }

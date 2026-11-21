@@ -23,10 +23,10 @@ At Rectangle's first launch, grant Accessibility permission in System Settings a
 | Dev tools | `nvm`, `uv`/`uvx`, and [fx](https://fx.sh/) for the current user. Does not install language runtimes or copy credentials. |
 | Apps | [Ghostty](https://ghostty.org/), [Rectangle](https://rectangleapp.com/), and the current stable [Chrome](https://www.google.com/chrome/) from vendor disk images. Existing app bundles are left alone; use their built-in updaters. |
 | Rectangle | The Rectangle preset plus the [saved overrides](config/rectangle-shortcuts.tsv), including Ctrl-Option-Left/Right for thirds and Ctrl-Option-F to maximize. |
-| Input | Fast key repeat (`2`) with a longer initial delay (`60`, about one second), mouse tracking `2`, trackpad tracking `3`, and Caps Lock as Control. |
+| Input | Fast key repeat (`2`) with a short initial delay (`15`), mouse tracking `2`, trackpad tracking `3`, and Caps Lock as Control. |
 | Apple tools | Installs via `xcode-select --install` on a fresh system; on subsequent runs selects only the latest stable CLT update listed by Apple for that Mac. |
 
-Caps Lock uses macOS's per-keyboard modifier preferences, not an app that monitors keystrokes. Connect the keyboard before running; rerun for newly connected keyboards. If a keyboard isn't detected or has a conflicting custom mapping, use **System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys** to set it without changing your other mappings.
+Caps Lock uses macOS's per-keyboard modifier preferences, not an app that monitors keystrokes. Connect the keyboard before running; rerun for newly connected keyboards. The Bluetooth Logitech MX Master 3's keyboard interface is ignored. If a keyboard isn't detected or has a conflicting custom mapping, use **System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys** to set it without changing your other mappings.
 
 ## Check an existing Mac
 
