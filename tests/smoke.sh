@@ -51,7 +51,11 @@ rc=0
 printf '# Existing config\nexport MAC_UP_TEST=untouched\n' > "$HOME/.zshrc"
 cp "$HOME/.zshrc" "$scratch/original"
 install_zsh_config
+cmp "$ROOT/config/bash_aliases" "$HOME/.bash_aliases"
+printf '\n# user-owned aliases\n' >> "$HOME/.bash_aliases"
+cp "$HOME/.bash_aliases" "$scratch/custom-aliases"
 install_zsh_config
+cmp "$scratch/custom-aliases" "$HOME/.bash_aliases"
 backups=("$HOME/.zshrc.mac-up-backup."*)
 [[ ${#backups[@]} == 1 ]]
 cmp "${backups[0]}" "$scratch/original"
@@ -59,6 +63,7 @@ cmp "${backups[0]}" "$scratch/original"
 PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/zsh -ic '
   set -e
   [[ $MAC_UP_TEST == untouched && $path[1] == "$HOME/.local/bin" ]]
+  [[ $aliases[gst] == "git status" && $aliases[glog] == "git log --oneline --pretty=format:"* ]]
   [[ $HISTFILE == "$HOME/.zsh_history" && $HISTSIZE == 300000 && $SAVEHIST == 250000 ]]
   for map in emacs viins; do
     [[ $(bindkey -M "$map" "^R") == *" history-incremental-search-backward" ]]

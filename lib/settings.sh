@@ -14,10 +14,13 @@ login_shell() {
 }
 
 install_zsh_config() {
-  local zdotdir=${ZDOTDIR:-$HOME} rc managed
+  local zdotdir=${ZDOTDIR:-$HOME} rc managed aliases=$HOME/.bash_aliases
   rc=$zdotdir/.zshrc
   managed=$HOME/.config/mac-up/zshrc.zsh
   mkdir -p "$zdotdir" "${managed%/*}"
+  if [[ ! -e $aliases && ! -L $aliases ]]; then
+    /bin/cp -n "$ROOT/config/bash_aliases" "$aliases"
+  fi
   if [[ ! -e $managed ]] || ! cmp -s "$ROOT/config/zshrc.zsh" "$managed"; then
     install -m 644 "$ROOT/config/zshrc.zsh" "$managed"
   fi

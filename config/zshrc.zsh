@@ -3,6 +3,10 @@ typeset -U path
 path=($HOME/.local/bin "${path[@]}")
 export PATH
 
+if [[ -f "$HOME/.bash_aliases" && -r "$HOME/.bash_aliases" ]]; then
+  source "$HOME/.bash_aliases"
+fi
+
 HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 HISTSIZE=300000
 SAVEHIST=250000
