@@ -102,6 +102,17 @@ install_portable_tools() {
   install_release_binary "$bin/jq" "https://github.com/jqlang/jq/releases/download/jq-$jq_version/jq-macos-$jq_target" "$jq_sha"
 }
 
+install_fzf() {
+  local bin=$HOME/.local/bin version=0.75.0 target sha
+  case $(/usr/bin/uname -m) in
+    arm64) target=arm64; sha=1e76698eb481436e42119bea6aa6e2bd9552ff090789d769c286e3c3a4e0ded6 ;;
+    x86_64) target=amd64; sha=8fa67fa874468b8e73ecad2df82cc110026f45d10605128aaac6b191262d2844 ;;
+    *) warn 'No fzf binary configured for this architecture'; return 1 ;;
+  esac
+  mkdir -p "$bin"
+  install_release_binary "$bin/fzf" "https://github.com/junegunn/fzf/releases/download/v$version/fzf-$version-darwin_$target.tar.gz" "$sha" fzf
+}
+
 install_developer_tools() {
   local nvm_version=0.41.0 highlight_version=0.8.0
   install_archive "https://codeload.github.com/nvm-sh/nvm/tar.gz/refs/tags/v$nvm_version" \

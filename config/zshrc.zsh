@@ -10,6 +10,14 @@ setopt INC_APPEND_HISTORY HIST_IGNORE_DUPS HIST_FIND_NO_DUPS
 bindkey -M emacs '^R' history-incremental-search-backward
 bindkey -M viins '^R' history-incremental-search-backward
 
+# Load only fzf's key bindings so it leaves existing Tab completion alone.
+if [[ -t 0 && -o zle ]] && (( $+commands[fzf] )); then
+  : ${FZF_CTRL_R_OPTS='--layout=reverse --border --prompt="History> "'}
+  FZF_CTRL_T_COMMAND='' FZF_ALT_C_COMMAND='' source <(
+    command fzf --zsh 2>/dev/null | /usr/bin/sed -n '/^### key-bindings\.zsh ###$/,/^### end: key-bindings\.zsh ###$/p'
+  )
+fi
+
 PROMPT='%B%F{cyan}%~%f%b%1(V. %F{yellow}%1v%f.) %# '
 if (( $+commands[git] )) &&
    { [[ $commands[git] != /usr/bin/git ]] || xcode-select -p >/dev/null 2>&1; }; then

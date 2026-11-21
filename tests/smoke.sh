@@ -19,11 +19,12 @@ mkdir -p "$HOME"
 /bin/bash "$ROOT/bootstrap.sh" --dry-run | grep -F 'Command Line Tools' >/dev/null
 [[ -z $(/bin/ls -A "$HOME") ]]
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
-[[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq'* ]]
+[[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq, fzf'* ]]
 rc=0
 report=$(/bin/bash "$ROOT/bootstrap.sh" --doctor) || rc=$?
 [[ $rc == 1 && $report == *'CHECK Managed zsh config:'* && $report == *'CHECK fx:'* &&
-   $report == *'CHECK rg:'* && $report == *'CHECK jq:'* && $report == *'No changes made.'* ]]
+   $report == *'CHECK rg:'* && $report == *'CHECK jq:'* && $report == *'CHECK fzf:'* &&
+   $report == *'No changes made.'* ]]
 [[ -z $(/bin/ls -A "$HOME") ]]
 rc=0
 /bin/bash "$ROOT/bootstrap.sh" --doctor --dry-run >/dev/null 2>&1 || rc=$?
@@ -55,7 +56,7 @@ backups=("$HOME/.zshrc.mac-up-backup."*)
 [[ ${#backups[@]} == 1 ]]
 cmp "${backups[0]}" "$scratch/original"
 [[ $(grep -Fc '# mac-up' "$HOME/.zshrc") == 1 ]]
-/bin/zsh -ic '
+PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/zsh -ic '
   set -e
   [[ $MAC_UP_TEST == untouched && $path[1] == "$HOME/.local/bin" ]]
   [[ $HISTFILE == "$HOME/.zsh_history" && $SAVEHIST == 20000 ]]
@@ -65,6 +66,35 @@ cmp "${backups[0]}" "$scratch/original"
   psvar[1]="(main)"
   [[ $(print -P -- "$PROMPT") == *"(main)"* ]]
 '
+
+mkdir -p "$HOME/.local/bin"
+cat > "$HOME/.local/bin/fzf" <<'EOF'
+#!/bin/sh
+[ "$1" = --zsh ] || exit 1
+cat <<'ZSH'
+### key-bindings.zsh ###
+if [[ ${FZF_CTRL_T_COMMAND-x} == '' && ${FZF_ALT_C_COMMAND-x} == '' ]]; then
+  fzf-history-widget() { :; }
+  zle -N fzf-history-widget
+  bindkey -M emacs '^R' fzf-history-widget
+  bindkey -M viins '^R' fzf-history-widget
+fi
+### end: key-bindings.zsh ###
+### completion.zsh ###
+bindkey -M emacs '^I' fzf-history-widget
+### end: completion.zsh ###
+ZSH
+EOF
+chmod +x "$HOME/.local/bin/fzf"
+pty_output=$(/usr/bin/script -q /dev/null /bin/zsh -ic '
+  set -e
+  for map in emacs viins; do
+    [[ $(bindkey -M "$map" "^R") == *" fzf-history-widget" ]]
+    [[ $(bindkey -M "$map" "^I") != *fzf* ]]
+  done
+  print "fzf history binding verified"
+' </dev/null)
+[[ $pty_output == *'fzf history binding verified'* ]]
 
 label=$(latest_clt_label <<'EOF'
 * Label: Command Line Tools for Xcode-16.10

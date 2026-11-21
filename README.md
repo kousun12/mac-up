@@ -19,8 +19,8 @@ At Rectangle's first launch, grant Accessibility permission in System Settings a
 
 | Area | Configuration |
 | --- | --- |
-| zsh | Login shell, persistent history, Ctrl-R reverse search, syntax highlighting, and a compact directory/Git branch prompt. Appends one loader to `.zshrc`, backing up the existing file first. |
-| Dev tools | `nvm`, `uv`/`uvx`, [fx](https://fx.sh/), [ripgrep (`rg`)](https://github.com/BurntSushi/ripgrep), and [jq](https://jqlang.org/) for the current user. `rg` and `jq` use pinned, checksum-verified upstream binaries. Does not install language runtimes or copy credentials. |
+| zsh | Login shell, persistent history, Ctrl-R fuzzy history search with a built-in fallback, syntax highlighting, and a compact directory/Git branch prompt. Appends one loader to `.zshrc`, backing up the existing file first. |
+| Dev tools | `nvm`, `uv`/`uvx`, [fx](https://fx.sh/), [ripgrep (`rg`)](https://github.com/BurntSushi/ripgrep), [jq](https://jqlang.org/), and [fzf](https://github.com/junegunn/fzf) for the current user. `rg`, `jq`, and `fzf` use pinned, checksum-verified upstream binaries. Does not install language runtimes or copy credentials. |
 | Apps | [Ghostty](https://ghostty.org/), [Rectangle](https://rectangleapp.com/), and the current stable [Chrome](https://www.google.com/chrome/) from vendor disk images. Existing app bundles are left alone; use their built-in updaters. |
 | Rectangle | The Rectangle preset plus the [saved overrides](config/rectangle-shortcuts.tsv), including Ctrl-Option-Left/Right for thirds and Ctrl-Option-F to maximize. |
 | Input | Fast key repeat (`2`) with a short initial delay (`15`), mouse tracking `2`, trackpad tracking `3`, and Caps Lock as Control. |
