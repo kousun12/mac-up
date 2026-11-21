@@ -1,0 +1,75 @@
+#!/bin/bash
+set -euo pipefail
+ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+source "$ROOT/lib/install.sh"
+source "$ROOT/lib/settings.sh"
+warn() { printf 'Warning: %s\n' "$*" >&2; }
+
+for file in "$ROOT/bootstrap.sh" "$ROOT"/lib/*.sh "$ROOT/tests/smoke.sh"; do
+  /bin/bash -n "$file"
+done
+/bin/zsh -n "$ROOT/config/zshrc.zsh"
+
+scratch=$(mktemp -d "${TMPDIR:-/tmp}/mac-up-test.XXXXXXXX")
+trap 'rm -rf -- "$scratch"' EXIT
+export HOME="$scratch/home with spaces"
+unset NVM_DIR ZDOTDIR
+mkdir -p "$HOME"
+/bin/bash "$ROOT/bootstrap.sh" --dry-run | grep -F 'Command Line Tools' >/dev/null
+[[ -z $(/bin/ls -A "$HOME") ]]
+plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
+[[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* ]]
+
+printf '# Existing config\nexport MAC_UP_TEST=untouched\n' > "$HOME/.zshrc"
+cp "$HOME/.zshrc" "$scratch/original"
+install_zsh_config
+install_zsh_config
+backups=("$HOME/.zshrc.mac-up-backup."*)
+[[ ${#backups[@]} == 1 ]]
+cmp "${backups[0]}" "$scratch/original"
+[[ $(grep -Fc '# mac-up' "$HOME/.zshrc") == 1 ]]
+/bin/zsh -ic '
+  set -e
+  [[ $MAC_UP_TEST == untouched && $path[1] == "$HOME/.local/bin" ]]
+  [[ $HISTFILE == "$HOME/.zsh_history" && $SAVEHIST == 20000 ]]
+  for map in emacs viins; do
+    [[ $(bindkey -M "$map" "^R") == *" history-incremental-search-backward" ]]
+  done
+  psvar[1]="(main)"
+  [[ $(print -P -- "$PROMPT") == *"(main)"* ]]
+'
+
+label=$(latest_clt_label <<'EOF'
+* Label: Command Line Tools for Xcode-16.10
+* Label: macOS Sequoia 15.7.2-24G325
+* Label: Command Line Tools for Xcode-16.9
+* Label: Command Line Tools for Xcode-17.0 beta
+EOF
+)
+[[ $label == 'Command Line Tools for Xcode-16.10' ]]
+
+keys=$(keyboard_keys <<'EOF'
+VendorID ProductID LocationID UsagePage Usage RegistryID Transport Class Product
+0x19f5 0x1028 0x2120000 1 6 0x100001129 USB HID Keyboard
+0x19f5 0x1028 0x2120000 1 6 0x100001129 USB HID Keyboard duplicate
+0x46d 0xb023 0x36322a89 1 2 0x10000116b Bluetooth HID Mouse
+EOF
+)
+[[ $keys == com.apple.keyboard.modifiermapping.6645-4136-0 ]]
+printf '{\n HIDKeyboardModifierMappingSrc = 30064771129;\n HIDKeyboardModifierMappingDst = 30064771300;\n}\n' | caps_is_control
+if printf '{\n HIDKeyboardModifierMappingSrc = 30064771129;\n HIDKeyboardModifierMappingDst = 30064771301;\n}\n' | caps_is_control; then
+  printf 'Incorrectly accepted Caps Lock to Shift\n' >&2
+  exit 1
+fi
+
+domain="$scratch/rectangle"
+/usr/bin/defaults write "$domain" unrelated -string preserved
+apply_rectangle_shortcuts "$domain"
+apply_rectangle_shortcuts "$domain"
+[[ $(/usr/bin/defaults read "$domain" unrelated) == preserved ]]
+[[ $(/usr/bin/defaults read "$domain" alternateDefaultShortcuts) == 1 ]]
+[[ $(/usr/bin/defaults read "$domain" bottomLeft | tr -d '[:space:]') == '{}' ]]
+[[ $(/usr/bin/defaults read "$domain" firstThird) == *'keyCode = 123;'* ]]
+[[ $(/usr/bin/defaults read "$domain" lastTwoThirds) == *'keyCode = 124;'* ]]
+[[ $(/usr/bin/defaults read "$domain" maximize) == *'modifierFlags = 786432;'* ]]
+printf 'mac-up smoke checks passed\n'

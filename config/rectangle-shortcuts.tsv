@@ -1,0 +1,22 @@
+# Rectangle 2.0.5 overrides. '-' explicitly disables a shortcut.
+# Unlisted actions keep the Rectangle preset. 786432 = Control + Option.
+bottomLeft	-
+bottomLeftSixth	-
+bottomRight	-
+center	-
+centerThird	-
+centerTwoThirds	-
+firstThird	123	786432
+firstTwoThirds	123	786432
+larger	-
+lastThird	124	786432
+lastTwoThirds	124	786432
+maximize	3	786432
+maximizeHeight	-
+moveRight	-
+nextDisplay	-
+previousDisplay	-
+smaller	-
+thirdFourth	-
+topLeft	-
+topRight	-
