@@ -1,6 +1,7 @@
 # Git shortcuts shared by Bash and zsh.
 alias gst='git status'
 alias gd='git diff'
+alias gco='git checkout'
 alias glog='git log --oneline --pretty=format:"%C(green bold dim)%h%Creset %C(auto)%d %C(cyan bold)%an%Creset %s %C(blue bold)(%cr)%Creset" --decorate --abbrev-commit --date=relative'
 
 # Switch to the repo's default branch without needing Oh My Zsh.
