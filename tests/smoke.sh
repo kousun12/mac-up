@@ -207,10 +207,24 @@ apply_rectangle_shortcuts "$domain"
 apply_rectangle_shortcuts "$domain"
 [[ $(/usr/bin/defaults read "$domain" unrelated) == preserved ]]
 [[ $(/usr/bin/defaults read "$domain" alternateDefaultShortcuts) == 1 ]]
-[[ $(/usr/bin/defaults read "$domain" bottomLeft | tr -d '[:space:]') == '{}' ]]
-[[ $(/usr/bin/defaults read "$domain" firstThird) == *'keyCode = 123;'* ]]
-[[ $(/usr/bin/defaults read "$domain" lastTwoThirds) == *'keyCode = 124;'* ]]
-[[ $(/usr/bin/defaults read "$domain" maximize) == *'modifierFlags = 786432;'* ]]
+for action in bottomLeft firstThreeFourths lastFourth lastThreeFourths; do
+  [[ $(/usr/bin/defaults read "$domain" "$action" | tr -d '[:space:]') == '{}' ]]
+done
+while read -r action code; do
+  shortcut=$(/usr/bin/defaults read "$domain" "$action")
+  [[ $shortcut == *"keyCode = $code;"* && $shortcut == *'modifierFlags = 1310720;'* ]]
+done <<'EOF'
+bottomHalf 125
+firstThird 123
+firstTwoThirds 123
+lastThird 124
+lastTwoThirds 124
+leftHalf 123
+maximize 3
+restore 51
+rightHalf 124
+topHalf 126
+EOF
 DOCTOR_ISSUES=0
 doctor_rectangle "$domain"
 [[ $DOCTOR_ISSUES == 0 ]]
