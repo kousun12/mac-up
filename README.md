@@ -33,7 +33,7 @@ On every Mac, open Tailscale after bootstrap, approve the requested system exten
 /bin/bash bootstrap.sh --always-on --hostname office-mac
 ```
 
-`--always-on` disables idle system sleep on AC power and enables restart after power loss if the hardware supports it. It leaves display sleep and battery settings alone. Keep the Mac plugged in; the setting doesn't override lid-close sleep on a MacBook.
+On AC power, `--always-on` keeps the Mac awake, puts the display to sleep after 10 minutes of inactivity, and enables restart after power loss if the hardware supports it. It disables automatic logout system-wide without changing screen lock or battery power settings. Keep the Mac plugged in; this doesn't override lid-close sleep on a MacBook.
 
 `--hostname NAME` (optional, works with or without `--always-on`) sets `ComputerName`, `LocalHostName`, SMB `NetBIOSName` (and `HostName` if already set), plus the Tailscale MagicDNS hostname when Tailscale is signed in.
 
