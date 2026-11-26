@@ -89,24 +89,11 @@ doctor_input() {
 }
 
 doctor_rectangle() {
-  local domain=$1 key action code flags actual
+  local domain=$1 line
   local -a mismatches=()
-  for key in alternateDefaultShortcuts allowAnyShortcut subsequentExecutionMode; do
-    if ! actual=$(/usr/bin/defaults read "$domain" "$key" 2>/dev/null) || [[ $actual != 1 ]]; then
-      mismatches+=("$key")
-    fi
-  done
-  while IFS=$'\t' read -r action code flags; do
-    case $action in ''|\#*) continue ;; esac
-    if ! actual=$(/usr/bin/defaults read "$domain" "$action" 2>/dev/null | tr -d '[:space:]'); then
-      mismatches+=("$action")
-    elif [[ $code == - && $actual != '{}' ]]; then
-      mismatches+=("$action")
-    elif [[ $code != - && $actual != "{keyCode=$code;modifierFlags=$flags;}" &&
-                            $actual != "{modifierFlags=$flags;keyCode=$code;}" ]]; then
-      mismatches+=("$action")
-    fi
-  done < "$ROOT/config/rectangle-shortcuts.tsv"
+  while IFS= read -r line; do
+    [[ -n $line ]] && mismatches+=("$line")
+  done < <(rectangle_mismatches "$domain")
   if (( ${#mismatches[@]} )); then
     doctor_issue "Rectangle saved shortcuts or preferences differ: ${mismatches[*]}"
   else

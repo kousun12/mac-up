@@ -109,6 +109,32 @@ apply_rectangle_shortcuts() {
   done < "$ROOT/config/rectangle-shortcuts.tsv"
 }
 
+rectangle_mismatches() {
+  local domain=$1 key action code flags actual
+  for key in alternateDefaultShortcuts allowAnyShortcut subsequentExecutionMode; do
+    if ! actual=$(/usr/bin/defaults read "$domain" "$key" 2>/dev/null) || [[ $actual != 1 ]]; then
+      printf '%s\n' "$key"
+    fi
+  done
+  while IFS=$'\t' read -r action code flags; do
+    case $action in ''|\#*) continue ;; esac
+    if ! actual=$(/usr/bin/defaults read "$domain" "$action" 2>/dev/null | tr -d '[:space:]'); then
+      printf '%s\n' "$action"
+    elif [[ $code == - && $actual != '{}' ]]; then
+      printf '%s\n' "$action"
+    elif [[ $code != - && $actual != "{keyCode=$code;modifierFlags=$flags;}" &&
+                            $actual != "{modifierFlags=$flags;keyCode=$code;}" ]]; then
+      printf '%s\n' "$action"
+    fi
+  done < "$ROOT/config/rectangle-shortcuts.tsv"
+}
+
+rectangle_configured() {
+  local domain=$1 actual
+  actual=$(/usr/bin/defaults read "$domain" launchOnLogin 2>/dev/null) || return 1
+  [[ $actual == 1 && -z $(rectangle_mismatches "$domain") ]]
+}
+
 enable_rectangle_login() {
   # Rectangle reads this preference on startup and registers its own login item.
   /usr/bin/defaults write "$1" launchOnLogin -bool true
@@ -116,17 +142,56 @@ enable_rectangle_login() {
 
 configure_rectangle() {
   local domain=com.knollsoft.Rectangle app=/Applications/Rectangle.app
-  enable_rectangle_login "$domain"
   if /usr/bin/pgrep -u "$(/usr/bin/id -u)" -x Rectangle >/dev/null; then
+    if rectangle_configured "$domain"; then
+      return
+    fi
+    enable_rectangle_login "$domain"
     warn 'Rectangle is running. Quit it and rerun mac-up to apply shortcuts and register it at login.'
     return
   fi
+  enable_rectangle_login "$domain"
   apply_rectangle_shortcuts "$domain"
   if [[ ! -f $app/Contents/Info.plist ]]; then
     app=$HOME/Applications/Rectangle.app
   fi
   if ! /usr/bin/open -g "$app"; then
     warn 'Could not start Rectangle. Open it manually to register it at login.'
+  fi
+}
+
+valid_hostname() {
+  local name=$1
+  (( ${#name} >= 1 && ${#name} <= 63 )) &&
+    [[ $name =~ ^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]
+}
+
+tailscale_cli() {
+  local bin
+  for bin in /Applications/Tailscale.app/Contents/MacOS/Tailscale \
+             "$HOME/Applications/Tailscale.app/Contents/MacOS/Tailscale"; do
+    if [[ -x $bin ]]; then
+      printf '%s\n' "$bin"
+      return
+    fi
+  done
+  return 1
+}
+
+configure_hostname() {
+  local name=$1 ts
+  valid_hostname "$name" || { warn "Invalid hostname: $name"; return 1; }
+  printf 'Setting network hostname to %s.\n' "$name"
+  /usr/bin/sudo /usr/sbin/scutil --set ComputerName "$name"
+  /usr/bin/sudo /usr/sbin/scutil --set LocalHostName "$name"
+  if /usr/sbin/scutil --get HostName >/dev/null 2>&1; then
+    /usr/bin/sudo /usr/sbin/scutil --set HostName "$name"
+  fi
+  /usr/bin/sudo /usr/bin/defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "$name"
+  if ts=$(tailscale_cli); then
+    if ! "$ts" set --hostname "$name"; then
+      warn "Could not update Tailscale hostname; after signing in to Tailscale, run: $ts set --hostname $name"
+    fi
   fi
 }
 
