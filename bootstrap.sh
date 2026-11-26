@@ -54,6 +54,7 @@ if (( DRY_RUN )); then
   if (( ALWAYS_ON )); then
     printf '%s\n' \
       '• Disable idle system sleep on AC power and enable restart after power loss if supported.' \
+      '• Set display sleep to 10 minutes on AC power and disable automatic logout without changing screen lock settings.' \
       '• Finish manually in System Settings > General > Sharing: enable Remote Login and Screen Sharing for selected users.'
   fi
   exit 0

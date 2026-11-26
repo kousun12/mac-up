@@ -22,11 +22,26 @@ plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
 [[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq, fzf, gh'* &&
    $plan == *'GitHub HTTPS credential helper'* && $plan == *'Tailscale'* &&
    $plan == *'configure Rectangle to open at login'* &&
-   $plan != *'idle system sleep'* && $plan != *'Remote Login'* && $plan != *'Screen Sharing'* ]]
+   $plan != *'idle system sleep'* && $plan != *'display sleep'* && $plan != *'automatic logout'* &&
+   $plan != *'Remote Login'* && $plan != *'Screen Sharing'* ]]
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt --always-on)
 [[ $plan != *'Command Line Tools'* && $plan == *'Tailscale'* && $plan == *'idle system sleep on AC power'* &&
+   $plan == *'display sleep to 10 minutes on AC power'* && $plan == *'disable automatic logout'* &&
    $plan == *'restart after power loss if supported'* && $plan == *'Remote Login and Screen Sharing for selected users'* ]]
 [[ -z $(/bin/ls -A "$HOME") ]]
+
+# Intercept the system tools so the test cannot change the host's settings.
+(
+  function /usr/bin/pmset() { [[ $* == '-g cap' ]] && printf '%s\n' "$fixture_capabilities"; }
+  function /usr/bin/sudo() { printf '%s\n' "$*" >> "$scratch/always-on.log"; }
+  for fixture_capabilities in sleep $'sleep\nautorestart'; do
+    expected='/usr/bin/pmset -c sleep 0 displaysleep 10'
+    if [[ $fixture_capabilities == *autorestart* ]]; then expected+=' autorestart 1'; fi
+    : > "$scratch/always-on.log"
+    configure_always_on >/dev/null
+    [[ $(< "$scratch/always-on.log") == "$expected"$'\n''/usr/bin/defaults write /Library/Preferences/.GlobalPreferences com.apple.autologout.AutoLogOutDelay -int 0' ]]
+  done
+)
 rc=0
 report=$(/bin/bash "$ROOT/bootstrap.sh" --doctor) || rc=$?
 [[ $rc == 1 && $report == *'CHECK Managed zsh config:'* && $report == *'CHECK fx:'* &&

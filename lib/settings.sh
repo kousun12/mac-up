@@ -132,14 +132,20 @@ configure_rectangle() {
 
 configure_always_on() {
   local capabilities
-  local -a settings=(sleep 0)
+  local -a settings=(sleep 0 displaysleep 10)
   if capabilities=$(/usr/bin/pmset -g cap) &&
      printf '%s\n' "$capabilities" | grep -Eq '^[[:space:]]*autorestart[[:space:]]*$'; then
     settings+=(autorestart 1)
   fi
-  printf 'Applying always-on settings for AC power (display sleep is unchanged).\n'
+  printf 'Disabling idle system sleep and setting display sleep to 10 minutes on AC power.\n'
   if ! /usr/bin/sudo /usr/bin/pmset -c "${settings[@]}"; then
     warn 'Could not apply always-on power settings.'
+    return 1
+  fi
+  printf 'Disabling automatic logout without changing screen lock settings.\n'
+  if ! /usr/bin/sudo /usr/bin/defaults write /Library/Preferences/.GlobalPreferences \
+    com.apple.autologout.AutoLogOutDelay -int 0; then
+    warn 'Could not disable automatic logout.'
     return 1
   fi
 }
