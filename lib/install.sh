@@ -118,10 +118,10 @@ install_fzf() {
 }
 
 install_github_cli() {
-  local bin=$HOME/.local/bin version=2.105.0 target sha package
+  local bin=$HOME/.local/bin version=2.106.0 target sha package
   case $(/usr/bin/uname -m) in
-    arm64) target=arm64; sha=2a5d03103ae444927383b93d9ffd65579a26e2eb900ce1cf11f55258d5319ded ;;
-    x86_64) target=amd64; sha=23602cbccbbdc6285a8520745b714cb927ce2ca621779373c2a20cd8e33fda66 ;;
+    arm64) target=arm64; sha=22b2b723dfbc69b6022b1b08604ff51c0db5aa8b6774b4ced1a47b8413a995d6 ;;
+    x86_64) target=amd64; sha=f43a04a5ffe0717e2e39d7591cbc50db24c6c38d09d0ea4998be27cd197758e3 ;;
     *) warn 'No gh binary configured for this architecture'; return 1 ;;
   esac
   mkdir -p "$bin"
@@ -228,5 +228,4 @@ install_apps() {
   install_app Ghostty.app https://release.files.ghostty.org/1.4.0/Ghostty.dmg com.mitchellh.ghostty 24VZTF6M5V 13
   install_app Rectangle.app https://download.rectangleapp.com/Rectangle2.0.5.dmg com.knollsoft.Rectangle XSYZ3E4B7D 14
   install_app 'Google Chrome.app' https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg com.google.Chrome EQHXZ8M8AV 13
-  install_tailscale
 }

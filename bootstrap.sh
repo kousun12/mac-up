@@ -4,13 +4,14 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: ./bootstrap.sh [--dry-run] [--skip-clt] [--always-on]
+Usage: ./bootstrap.sh [--dry-run] [--skip-clt] [--always-on] [--hostname NAME]
        ./bootstrap.sh --doctor
 
-  --dry-run    Print the planned changes without making them or using the network.
-  --skip-clt   Skip Apple's Command Line Tools install/update check on this run.
-  --always-on  Keep this Mac awake on AC power and guide remote access setup.
-  --doctor     Check local tools, apps, and preferences without changing anything.
+  --dry-run        Print the planned changes without making them or using the network.
+  --skip-clt       Skip Apple's Command Line Tools install/update check on this run.
+  --always-on      Keep this Mac awake on AC power and guide remote access setup.
+  --hostname NAME  Set this Mac's network name (Bonjour, SMB, and Tailscale if present).
+  --doctor         Check local tools, apps, and preferences without changing anything.
 EOF
 }
 
@@ -18,20 +19,46 @@ DRY_RUN=0
 SKIP_CLT=0
 ALWAYS_ON=0
 DOCTOR=0
-for arg in "$@"; do
-  case $arg in
+HOSTNAME_TARGET=
+while (( $# )); do
+  case $1 in
     --dry-run) DRY_RUN=1 ;;
     --skip-clt) SKIP_CLT=1 ;;
     --always-on) ALWAYS_ON=1 ;;
+    --hostname)
+      shift
+      if (( ! $# )) || [[ -z $1 ]]; then
+        usage >&2
+        exit 64
+      fi
+      HOSTNAME_TARGET=$1
+      ;;
+    --hostname=*)
+      HOSTNAME_TARGET=${1#--hostname=}
+      if [[ -z $HOSTNAME_TARGET ]]; then
+        usage >&2
+        exit 64
+      fi
+      ;;
     --doctor) DOCTOR=1 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; exit 64 ;;
   esac
+  shift
 done
 
-if (( DOCTOR && (DRY_RUN || SKIP_CLT || ALWAYS_ON) )); then
+if (( DOCTOR && (DRY_RUN || SKIP_CLT || ALWAYS_ON) )) ||
+   { (( DOCTOR )) && [[ -n $HOSTNAME_TARGET ]]; }; then
   usage >&2
   exit 64
+fi
+
+if [[ -n $HOSTNAME_TARGET ]]; then
+  if (( ${#HOSTNAME_TARGET} > 63 )) ||
+     [[ ! $HOSTNAME_TARGET =~ ^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
+    printf 'Invalid hostname: %s (use 1-63 ASCII letters, digits, or internal hyphens).\n' "$HOSTNAME_TARGET" >&2
+    exit 64
+  fi
 fi
 
 if [[ $(/usr/bin/uname -s) != Darwin ]]; then
@@ -47,10 +74,14 @@ if (( DRY_RUN )); then
     '• Set /bin/zsh as the login shell if needed; add a managed config without replacing .zshrc.' \
     '• Install nvm, uv, uvx, fx, rg, jq, fzf, gh, and zsh-syntax-highlighting if missing.' \
     '• Configure gh as Git’s GitHub HTTPS credential helper if signed in.' \
-    '• Install Ghostty, Rectangle, current stable Google Chrome, and Tailscale if missing.' \
+    '• Install Ghostty, Rectangle, and current stable Google Chrome if missing.' \
     '• Restore Rectangle shortcuts and configure Rectangle to open at login.' \
     '• Restore fast repeat with a short initial delay and mouse/trackpad tracking speeds.' \
-    '• Set Caps Lock to Control for detected keyboards without replacing existing modifier mappings.'
+    '• Set Caps Lock to Control for detected keyboards without replacing existing modifier mappings.' \
+    '• Install Tailscale if missing.'
+  if [[ -n $HOSTNAME_TARGET ]]; then
+    printf '• Set ComputerName, LocalHostName, SMB NetBIOSName, and Tailscale hostname to %s.\n' "$HOSTNAME_TARGET"
+  fi
   if (( ALWAYS_ON )); then
     printf '%s\n' \
       '• Disable idle system sleep on AC power and enable restart after power loss if supported.' \
@@ -99,6 +130,10 @@ install_apps
 configure_rectangle
 input_preferences
 configure_caps_lock
+install_tailscale
+if [[ -n $HOSTNAME_TARGET ]]; then
+  configure_hostname "$HOSTNAME_TARGET"
+fi
 if (( ALWAYS_ON )); then
   configure_always_on
 fi

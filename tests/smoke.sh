@@ -25,7 +25,12 @@ plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
    $plan != *'idle system sleep'* && $plan != *'Remote Login'* && $plan != *'Screen Sharing'* ]]
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt --always-on)
 [[ $plan != *'Command Line Tools'* && $plan == *'Tailscale'* && $plan == *'idle system sleep on AC power'* &&
-   $plan == *'restart after power loss if supported'* && $plan == *'Remote Login and Screen Sharing for selected users'* ]]
+   $plan == *'restart after power loss if supported'* && $plan == *'Remote Login and Screen Sharing for selected users'* &&
+   $plan != *'Set ComputerName'* ]]
+plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt --hostname rcofficemini)
+[[ $plan == *'Set ComputerName, LocalHostName, SMB NetBIOSName, and Tailscale hostname to rcofficemini.'* ]]
+plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt --hostname=rc-home-mini)
+[[ $plan == *'Set ComputerName, LocalHostName, SMB NetBIOSName, and Tailscale hostname to rc-home-mini.'* ]]
 [[ -z $(/bin/ls -A "$HOME") ]]
 rc=0
 report=$(/bin/bash "$ROOT/bootstrap.sh" --doctor) || rc=$?
@@ -39,6 +44,26 @@ rc=0
 rc=0
 /bin/bash "$ROOT/bootstrap.sh" --doctor --always-on >/dev/null 2>&1 || rc=$?
 [[ $rc == 64 ]]
+rc=0
+/bin/bash "$ROOT/bootstrap.sh" --doctor --hostname rcofficemini >/dev/null 2>&1 || rc=$?
+[[ $rc == 64 ]]
+for bad_args in '--hostname' '--hostname=' '--hostname -bad' '--hostname bad-' '--hostname bad.local'; do
+  rc=0
+  # shellcheck disable=SC2086
+  /bin/bash "$ROOT/bootstrap.sh" --dry-run $bad_args >/dev/null 2>&1 || rc=$?
+  [[ $rc == 64 ]]
+done
+rc=0
+/bin/bash "$ROOT/bootstrap.sh" --dry-run --hostname 'bad name' >/dev/null 2>&1 || rc=$?
+[[ $rc == 64 ]]
+valid_hostname rcofficemini
+valid_hostname rc-mbp-2026
+valid_hostname a
+! valid_hostname ''
+! valid_hostname '-bad'
+! valid_hostname 'bad-'
+! valid_hostname 'bad name'
+! valid_hostname 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
 # Keep an existing Tailscale bundle without downloading or invoking the installer.
 (
@@ -228,7 +253,13 @@ EOF
 DOCTOR_ISSUES=0
 doctor_rectangle "$domain"
 [[ $DOCTOR_ISSUES == 0 ]]
+rectangle_configured "$domain"
+/usr/bin/defaults write "$domain" launchOnLogin -bool false
+! rectangle_configured "$domain"
+enable_rectangle_login "$domain"
+rectangle_configured "$domain"
 /usr/bin/defaults write "$domain" maximize -dict
+! rectangle_configured "$domain"
 doctor_rectangle "$domain"
 [[ $DOCTOR_ISSUES == 1 ]]
 [[ $(/usr/bin/defaults read "$domain" maximize | tr -d '[:space:]') == '{}' ]]

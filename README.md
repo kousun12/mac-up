@@ -11,9 +11,9 @@ Download and unzip a copy of this repo if Git isn't installed yet. In Terminal o
 /bin/bash bootstrap.sh
 ```
 
-Run as your normal logged-in user, not with `sudo`. The script may ask for admin access to install apps, including Tailscale, apply an Apple Command Line Tools update, or change power settings in `--always-on` mode. If the tools are missing, accept Apple's install dialog; mac-up does the rest of its work and exits with status 2 while the tools are pending. Rerun after the Apple installer finishes. Use `--skip-clt` to skip the installer/update check on a particular run.
+Run as your normal logged-in user, not with `sudo`. User-scoped shell, dev tool, app, Rectangle, and input settings run first; admin steps (Tailscale, `--hostname`, `--always-on`, or an Apple Command Line Tools update) run at the end. If Command Line Tools are missing, accept Apple's install dialog; mac-up does the rest of its work and exits with status 2 while the tools are pending. Rerun after the Apple installer finishes. Use `--skip-clt` to skip the installer/update check on a particular run.
 
-mac-up configures Rectangle to open at login and starts it to register the login item. At first launch, grant Accessibility permission in System Settings and choose the Rectangle preset if asked. If Rectangle was already running, quit it and rerun mac-up to apply shortcuts and register it at login. Open a new tab for the zsh changes, and log out and back in for the input preferences.
+mac-up configures Rectangle to open at login and starts it to register the login item. At first launch, grant Accessibility permission in System Settings and choose the Rectangle preset if asked. If Rectangle is already running with different settings, quit it and rerun mac-up to apply shortcuts and register it at login. Open a new tab for the zsh changes, and log out and back in for the input preferences.
 
 For GitHub HTTPS remotes (including `ggpush`), mac-up configures `gh` as Git's credential helper if you're already signed in. On a fresh setup, sign in and enable it when you're ready:
 
@@ -29,15 +29,17 @@ On every Mac, open Tailscale after bootstrap, approve the requested system exten
 ## Set up an always-on Mac
 
 ```sh
-/bin/bash bootstrap.sh --always-on --dry-run
-/bin/bash bootstrap.sh --always-on
+/bin/bash bootstrap.sh --always-on --hostname office-mac --dry-run
+/bin/bash bootstrap.sh --always-on --hostname office-mac
 ```
 
-This disables idle system sleep on AC power and enables restart after power loss if the hardware supports it. It leaves display sleep and battery settings alone. Keep the Mac plugged in; the setting doesn't override lid-close sleep on a MacBook.
+`--always-on` disables idle system sleep on AC power and enables restart after power loss if the hardware supports it. It leaves display sleep and battery settings alone. Keep the Mac plugged in; the setting doesn't override lid-close sleep on a MacBook.
+
+`--hostname NAME` (optional, works with or without `--always-on`) sets `ComputerName`, `LocalHostName`, SMB `NetBIOSName` (and `HostName` if already set), plus the Tailscale MagicDNS hostname when Tailscale is signed in.
 
 On the host Mac, finish in **System Settings → General → Sharing**:
 
-1. Enable [Remote Login](https://support.apple.com/guide/mac-help/allow-a-remote-computer-to-access-your-mac-mchlp1066/mac) and choose **Only these users**. Add your Mac account and leave **Allow full disk access for remote users** off unless you need it. SSH keys are recommended.
+1. Enable [Remote Login](https://support.apple.com/guide/mac-help/allow-a-remote-computer-to-access-your-mac-mchlp1066/mac) and choose **Only these users**. Add your Mac account and leave **Allow full disk access for remote users** off unless you need it. SSH keys are recommended (for example, `ssh-copy-id youruser@office-mac` from another Mac on your tailnet).
 2. Enable [Screen Sharing](https://support.apple.com/guide/mac-help/turn-screen-sharing-on-or-off-mh11848/mac) and choose **Only these users**. Add your Mac account; leave the separate VNC password and permission-request options off. If Remote Management is already on, macOS won't let you enable both; check with the administrator before changing a managed Mac.
 
 From another device on your tailnet, replace `youruser` and `office-mac` with the host's Mac account and MagicDNS name (or use its Tailscale IP):
