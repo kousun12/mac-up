@@ -169,11 +169,15 @@ install_developer_tools() {
 
 install_app() (
   local name=$1 url=$2 ident=$3 team=$4 minimum=$5
-  local dest=/Applications/$name mount source
-  if [[ -f $dest/Contents/Info.plist || -f $HOME/Applications/$name/Contents/Info.plist ]]; then
-    printf 'Keeping existing %s\n' "$name"
-    return
-  fi
+  local dest=/Applications/$name mount source existing
+  shift 5
+  for existing in "$name" "$@"; do
+    if [[ -f /Applications/$existing/Contents/Info.plist ||
+          -f $HOME/Applications/$existing/Contents/Info.plist ]]; then
+      printf 'Keeping existing %s\n' "$existing"
+      return
+    fi
+  done
   if (( MACOS_MAJOR < minimum )); then
     warn "$name requires macOS $minimum or newer; skipping it."
     return
@@ -228,4 +232,6 @@ install_apps() {
   install_app Ghostty.app https://release.files.ghostty.org/1.4.0/Ghostty.dmg com.mitchellh.ghostty 24VZTF6M5V 13
   install_app Rectangle.app https://download.rectangleapp.com/Rectangle2.0.5.dmg com.knollsoft.Rectangle XSYZ3E4B7D 14
   install_app 'Google Chrome.app' https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg com.google.Chrome EQHXZ8M8AV 13
+  install_app Rex.app https://blob.superlogical.com/download/rex-app/preview/latest.dmg \
+    com.superlogical.rex AG92C3PT77 15 'Rex Beta.app'
 }

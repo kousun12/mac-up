@@ -75,6 +75,7 @@ if (( DRY_RUN )); then
     '• Install nvm, uv, uvx, fx, rg, jq, fzf, gh, and zsh-syntax-highlighting if missing.' \
     '• Configure gh as Git’s GitHub HTTPS credential helper if signed in.' \
     '• Install Ghostty, Rectangle, and current stable Google Chrome if missing.' \
+    '• Install Rex Preview if missing on macOS 15 or newer.' \
     '• Restore Rectangle shortcuts and configure Rectangle to open at login.' \
     '• Restore fast repeat with a short initial delay and mouse/trackpad tracking speeds.' \
     '• Set Caps Lock to Control for detected keyboards without replacing existing modifier mappings.' \

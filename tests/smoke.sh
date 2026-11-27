@@ -21,6 +21,7 @@ mkdir -p "$HOME"
 plan=$(/bin/bash "$ROOT/bootstrap.sh" --dry-run --skip-clt)
 [[ $plan != *'Command Line Tools'* && $plan == *'Rectangle'* && $plan == *'rg, jq, fzf, gh'* &&
    $plan == *'GitHub HTTPS credential helper'* && $plan == *'Tailscale'* &&
+   $plan == *'Install Rex Preview if missing on macOS 15 or newer'* &&
    $plan == *'configure Rectangle to open at login'* &&
    $plan != *'idle system sleep'* && $plan != *'display sleep'* && $plan != *'automatic logout'* &&
    $plan != *'Remote Login'* && $plan != *'Screen Sharing'* ]]
@@ -79,6 +80,25 @@ valid_hostname a
 ! valid_hostname 'bad-'
 ! valid_hostname 'bad name'
 ! valid_hostname 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+# Include the signed Rex Preview app in the default install.
+(
+  install_app() { printf '%s\n' "$*"; }
+  apps=$(install_apps)
+  [[ $apps == *'Rex.app https://blob.superlogical.com/download/rex-app/preview/latest.dmg com.superlogical.rex AG92C3PT77 15 Rex Beta.app'* ]]
+)
+
+# Keep a legacy app bundle and recognize it in doctor without downloading anything.
+(
+  legacy='mac-up fixture Beta'
+  plist="$HOME/Applications/$legacy.app/Contents/Info.plist"
+  mkdir -p "${plist%/*}"
+  /usr/bin/plutil -create xml1 "$plist"
+  /usr/bin/plutil -insert CFBundleShortVersionString -string fixture "$plist"
+  download() { printf 'Tried to download a replacement app\n' >&2; exit 1; }
+  [[ $(install_app 'mac-up fixture.app' unused.invalid fixture unused 15 "$legacy.app") == "Keeping existing $legacy.app" ]]
+  [[ $(doctor_app 'mac-up fixture' "$legacy") == "OK    $legacy fixture: ${plist%/Contents/Info.plist}" ]]
+)
 
 # Keep an existing Tailscale bundle without downloading or invoking the installer.
 (

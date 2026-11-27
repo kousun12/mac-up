@@ -51,14 +51,16 @@ doctor_tools() {
 }
 
 doctor_app() {
-  local name=$1 app version
-  for app in "/Applications/$name.app" "$HOME/Applications/$name.app"; do
-    if version=$(/usr/bin/plutil -extract CFBundleShortVersionString raw -o - "$app/Contents/Info.plist" 2>/dev/null); then
-      doctor_ok "$name $version: $app"
-      return
-    fi
+  local label=$1 name app version
+  for name in "$@"; do
+    for app in "/Applications/$name.app" "$HOME/Applications/$name.app"; do
+      if version=$(/usr/bin/plutil -extract CFBundleShortVersionString raw -o - "$app/Contents/Info.plist" 2>/dev/null); then
+        doctor_ok "$name $version: $app"
+        return
+      fi
+    done
   done
-  doctor_issue "$name: no readable app bundle in /Applications or ~/Applications"
+  doctor_issue "$label: no readable app bundle in /Applications or ~/Applications"
 }
 
 doctor_input() {
@@ -113,6 +115,11 @@ run_doctor() {
   doctor_tools
   doctor_app Ghostty
   doctor_app Rectangle
+  if (( MACOS_MAJOR >= 15 )); then
+    doctor_app Rex 'Rex Beta'
+  else
+    doctor_info 'Rex requires macOS 15 or newer'
+  fi
   doctor_app 'Google Chrome'
   doctor_app Tailscale
   doctor_rectangle com.knollsoft.Rectangle
